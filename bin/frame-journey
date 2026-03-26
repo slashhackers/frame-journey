@@ -24,7 +24,6 @@ while [[ "$#" -gt 0 ]]; do
   case "$1" in
     -h|--help)
       HELP_MODE="true"
-      shift
       ;;
     --dry-run)
       DRY_RUN="true"
