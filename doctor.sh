@@ -93,8 +93,10 @@ done
 
 echo
 echo "🔐 Permission Check"
-if find . -name "*.sh" ! -executable | grep -q .; then
+NON_EXECUTABLE_SCRIPTS=$(find . -name "*.sh" ! -perm -111 -type f)
+if [ -n "$NON_EXECUTABLE_SCRIPTS" ]; then
   echo "⚠️  Some scripts are not executable"
+  echo "$NON_EXECUTABLE_SCRIPTS"
   echo "   Run: chmod +x **/*.sh"
 else
   echo "$PASS All scripts executable"
