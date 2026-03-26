@@ -62,12 +62,22 @@ verify_dependencies() {
 }
 
 install_files() {
-    # If we're not running from inside the repo, clone it first
-    if [ ! -d "bin" ] || [ ! -d "libexec" ]; then
-        status_info "Remote execution detected. Cloning repository..."
+    # If we're not running from inside the repo (no bin dir), download the bundle
+    if [ ! -d "bin" ]; then
+        status_info "Remote execution detected. Downloading package..."
         TEMP_DIR=$(mktemp -d)
-        git clone --quiet https://github.com/slashhackers/frame-journey.git "$TEMP_DIR"
-        SOURCE_DIR="$TEMP_DIR"
+        BUNDLE_URL="https://github.com/slashhackers/frame-journey/releases/latest/download/frame-journey.tar.gz"
+        
+        if curl -L --fail -o "$TEMP_DIR/frame-journey.tar.gz" "$BUNDLE_URL"; then
+            status_info "Extracting package..."
+            tar -xzf "$TEMP_DIR/frame-journey.tar.gz" -C "$TEMP_DIR"
+            SOURCE_DIR="$TEMP_DIR"
+        else
+            status_fail "Failed to download the package from $BUNDLE_URL"
+            status_info "Falling back to git clone..."
+            git clone --quiet https://github.com/slashhackers/frame-journey.git "$TEMP_DIR/repo"
+            SOURCE_DIR="$TEMP_DIR/repo"
+        fi
     else
         SOURCE_DIR="."
     fi
@@ -75,7 +85,7 @@ install_files() {
     status_info "Installing files to $INSTALL_DIR..."
     mkdir -p "$INSTALL_DIR"
     
-    # Copy project structure
+    # Copy project structure (bin, libexec, config)
     cp -R "$SOURCE_DIR/bin" "$SOURCE_DIR/libexec" "$SOURCE_DIR/config" "$INSTALL_DIR/" 2>/dev/null || true
     
     chmod +x "$INSTALL_DIR/bin/$BINARY_NAME"
