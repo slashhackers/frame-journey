@@ -91,13 +91,13 @@ done
 if [ "$HELP_MODE" = "true" ] || [ -z "$INPUT" ]; then
     echo "Usage: frame-journey [options] <input_video_file>"
     echo "Options:"
-    echo "  -r <720|1080>       Select output resolution"
-    echo "  --trim-start <time> Start time (e.g. 00:00:10)"
-    echo "  --duration <sec>    Duration in seconds"
-    echo "  --show-progress     Show live progress bar"
-    echo "  --dry-run           Show command without encoding"
-    echo "  -v, --version       Show version"
-    echo "  --update            Check for updates"
+    echo "  -r <1080|720|480|360> Select output resolution"
+    echo "  --trim-start <time>   Start time (e.g. 00:00:10)"
+    echo "  --duration <sec>      Duration in seconds"
+    echo "  --show-progress       Show live progress bar"
+    echo "  --dry-run             Show command without encoding"
+    echo "  -v, --version         Show version"
+    echo "  --update              Check for updates"
     
     if [ "$HELP_MODE" = "true" ]; then
         exit 0
@@ -117,8 +117,8 @@ fi
 
 if [ -n "$SELECTED_RESOLUTION" ]; then
     # Validate selected resolution
-    if [ "$SELECTED_RESOLUTION" != "720" ] && [ "$SELECTED_RESOLUTION" != "1080" ]; then
-        echo "Error: Invalid resolution specified. Use '720' or '1080'."
+    if [ "$SELECTED_RESOLUTION" != "720" ] && [ "$SELECTED_RESOLUTION" != "1080" ] && [ "$SELECTED_RESOLUTION" != "480" ] && [ "$SELECTED_RESOLUTION" != "360" ]; then
+        echo "Error: Invalid resolution specified. Use '1080', '720', '480' or '360'."
         exit 1
     fi
     RESOLUTIONS="$SELECTED_RESOLUTION"
@@ -161,15 +161,13 @@ for RES in $RESOLUTIONS; do
   if [ -n "$OUTPUT_FILE_NAME" ]; then
     CURRENT_OUTPUT_FILE="$OUTPUT_FILE_NAME"
   else
-    if [ "$RES" = "1080" ]; then
-      CURRENT_OUTPUT_FILE="output_1080p.mp4"
-    else
-      CURRENT_OUTPUT_FILE="output_720p.mp4"
-    fi
+    CURRENT_OUTPUT_FILE="output_${RES}p.mp4"
   fi
 
   [ "$RES" = "1080" ] && CMD="bash \"$LIBEXEC_DIR/video/transcode_1080p.sh\" \"$INPUT\" \"$AUDIO_INDEX\" \"$CURRENT_OUTPUT_FILE\" $TRIM_ARGS $PROGRESS_ARGS"
   [ "$RES" = "720" ] && CMD="bash \"$LIBEXEC_DIR/video/transcode_720p.sh\" \"$INPUT\" \"$AUDIO_INDEX\" \"$CURRENT_OUTPUT_FILE\" $TRIM_ARGS $PROGRESS_ARGS"
+  [ "$RES" = "480" ] && CMD="bash \"$LIBEXEC_DIR/video/transcode_480p.sh\" \"$INPUT\" \"$AUDIO_INDEX\" \"$CURRENT_OUTPUT_FILE\" $TRIM_ARGS $PROGRESS_ARGS"
+  [ "$RES" = "360" ] && CMD="bash \"$LIBEXEC_DIR/video/transcode_360p.sh\" \"$INPUT\" \"$AUDIO_INDEX\" \"$CURRENT_OUTPUT_FILE\" $TRIM_ARGS $PROGRESS_ARGS"
 
   if [ "$DRY_RUN" = "true" ]; then
     echo "🌵 [DRY RUN] Would execute: $CMD"
