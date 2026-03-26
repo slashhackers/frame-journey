@@ -17,33 +17,18 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Generate Changelog
-        id: changelog
-        run: |
-          # Simple script to extract recent commit messages since last tag
-          git fetch --tags
-          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
-          if [ -z "$PREVIOUS_TAG" ]; then
-            CHANGELOG=$(git log --oneline)
-          else
-            CHANGELOG=$(git log --oneline ${PREVIOUS_TAG}..HEAD)
-          fi
-          echo "CHANGELOG<<EOF" >> $GITHUB_ENV
-          echo "$CHANGELOG" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
           name: Release ${{ github.ref_name }}
+          generate_release_notes: true
           body: |
-            ## Changes in this version
-            ${{ env.CHANGELOG }}
-            
-            ### Installation
+            ### 🚀 Installation
             ```bash
             /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/slashhackers/frame-journey/main/install.sh)"
             ```
+            
+            *(Release notes automatically generated below)*
           draft: false
           prerelease: false
