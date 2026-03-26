@@ -12,7 +12,7 @@ BIN_DIR="$( cd -P "$( dirname "$SOURCE" )" &> /dev/null && pwd )"
 PROJECT_ROOT=$(dirname "$BIN_DIR")
 LIBEXEC_DIR="$PROJECT_ROOT/libexec"
 
-VERSION="1.5.0"
+VERSION="1.5.1"
 
 # Initialize variables
 INPUT=""
