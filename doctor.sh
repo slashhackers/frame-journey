@@ -85,6 +85,8 @@ required_files=(
   "libexec/video/select_resolution.sh"
   "libexec/video/transcode_1080p.sh"
   "libexec/video/transcode_720p.sh"
+  "libexec/video/transcode_480p.sh"
+  "libexec/video/transcode_360p.sh"
 )
 
 for file in "${required_files[@]}"; do
