@@ -109,6 +109,7 @@ frame-journey input.mp4
 ```
 
 ### Options:
+- `-h, --help`: Show the help message.
 - `-v, --version`: Show the current version.
 - `--update`: Check for and install updates.
 - `--dry-run`: Show what would be done without actual transcoding.

@@ -47,3 +47,28 @@ jobs:
             exit 1
           fi
           echo "✅ No hardcoded absolute paths found."
+
+  install-test:
+    name: Installation Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Installer
+        run: |
+          chmod +x install.sh
+          ./install.sh
+
+      - name: Verify CLI Command
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          if ! command -v frame-journey >/dev/null 2>&1; then
+            echo "❌ frame-journey command not found in PATH!"
+            exit 1
+          fi
+          echo "✅ CLI installed at: $(which frame-journey)"
+          
+          # Run version and help checks
+          frame-journey --version
+          frame-journey --help
