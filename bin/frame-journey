@@ -21,6 +21,11 @@ EXPLICIT_AUDIO_INDEX=""
 # Parse arguments
 while [[ "$#" -gt 0 ]]; do
   case "$1" in
+    -h|--help)
+      # Trigger the usage message below by clearing INPUT and breaking
+      INPUT=""
+      break
+      ;;
     --dry-run)
       DRY_RUN="true"
       ;;
