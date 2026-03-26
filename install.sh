@@ -121,8 +121,11 @@ setup_path_persistence() {
         *)      status_info "Unknown shell. Please manually add $BIN_DIR to your PATH."; return ;;
     esac
 
-    # Ensure the profile exists
-    touch "$shell_profile"
+    # --- THE FIX: Create the file if it doesn't exist ---
+    if [ ! -f "$shell_profile" ]; then
+        status_info "Creating shell profile: $shell_profile"
+        touch "$shell_profile"
+    fi
 
     if grep -q "$BIN_DIR" "$shell_profile" 2>/dev/null; then
         status_ok "PATH is already configured in $shell_profile"
