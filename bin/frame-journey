@@ -1,8 +1,14 @@
 #!/bin/bash
 set -e
 
-# Get the directory where the script is located
-BIN_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
+# Get the directory where the script is located (resolving symlinks)
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do
+  DIR="$( cd -P "$( dirname "$SOURCE" )" &> /dev/null && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+BIN_DIR="$( cd -P "$( dirname "$SOURCE" )" &> /dev/null && pwd )"
 PROJECT_ROOT=$(dirname "$BIN_DIR")
 LIBEXEC_DIR="$PROJECT_ROOT/libexec"
 
@@ -18,6 +24,10 @@ DRY_RUN="false"
 OUTPUT_FILE_NAME=""
 EXPLICIT_AUDIO_INDEX=""
 HELP_MODE="false"
+COMMAND=""
+JSON_OUTPUT="false"
+METADATA_TITLE=""
+METADATA_DESCRIPTION=""
 
 # Parse arguments
 while [[ "$#" -gt 0 ]]; do
@@ -31,6 +41,20 @@ while [[ "$#" -gt 0 ]]; do
     -v|--version)
       echo "frame-journey v$VERSION"
       exit 0
+      ;;
+    --json)
+      JSON_OUTPUT="true"
+      ;;
+    --title)
+      METADATA_TITLE="$2"
+      shift
+      ;;
+    --description)
+      METADATA_DESCRIPTION="$2"
+      shift
+      ;;
+    info)
+      COMMAND="info"
       ;;
     --update)
       echo "🔍 Checking for updates on GitHub..."
@@ -88,14 +112,19 @@ while [[ "$#" -gt 0 ]]; do
   shift
 done
 
-if [ "$HELP_MODE" = "true" ] || [ -z "$INPUT" ]; then
+if [ "$HELP_MODE" = "true" ] || ([ -z "$INPUT" ] && [ -z "$COMMAND" ]); then
     echo "Usage: frame-journey [options] <input_video_file>"
+    echo "       frame-journey info [options] <input_video_file>"
+    echo ""
     echo "Options:"
     echo "  -r <1080|720|480|360> Select output resolution"
     echo "  --trim-start <time>   Start time (e.g. 00:00:10)"
     echo "  --duration <sec>      Duration in seconds"
+    echo "  --title <text>        Set media title (default: filename)"
+    echo "  --description <text>  Set media description (default: empty)"
     echo "  --show-progress       Show live progress bar"
     echo "  --dry-run             Show command without encoding"
+    echo "  --json                Output info in JSON format"
     echo "  -v, --version         Show version"
     echo "  --update              Check for updates"
     
@@ -104,6 +133,22 @@ if [ "$HELP_MODE" = "true" ] || [ -z "$INPUT" ]; then
     else
         exit 1
     fi
+fi
+
+if [ "$COMMAND" = "info" ]; then
+    FORMAT="text"
+    if [ "$JSON_OUTPUT" = "true" ]; then
+        FORMAT="json"
+    fi
+    bash "$LIBEXEC_DIR/utils/video_info.sh" "$INPUT" "$FORMAT"
+    exit 0
+fi
+
+# Default title to filename if not provided
+if [ -z "$METADATA_TITLE" ]; then
+    METADATA_TITLE=$(basename "$INPUT")
+    # Remove extension
+    METADATA_TITLE="${METADATA_TITLE%.*}"
 fi
 
 IFS="|" read HEIGHT DURATION_UNUSED AUDIO_STREAMS <<< "$(bash "$LIBEXEC_DIR/utils/ffprobe.sh" "$INPUT")"
@@ -149,8 +194,10 @@ for RES in $RESOLUTIONS; do
     TRIM_ARGS+="--trim-start \"$TRIM_START\" "
   fi
   if [ -n "$DURATION" ]; then # Changed from TRIM_END
-    TRIM_ARGS+="--duration \"$DURATION\"" # Changed from --trim-end
+    TRIM_ARGS+="--duration \"$DURATION\" " # Added space
   fi
+
+  METADATA_ARGS="--title \"$METADATA_TITLE\" --description \"$METADATA_DESCRIPTION\""
 
   PROGRESS_ARGS=""
   if [ "$SHOW_PROGRESS_ENABLED" = "true" ]; then
@@ -164,10 +211,10 @@ for RES in $RESOLUTIONS; do
     CURRENT_OUTPUT_FILE="output_${RES}p.mp4"
   fi
 
-  [ "$RES" = "1080" ] && CMD="bash \"$LIBEXEC_DIR/video/transcode_1080p.sh\" \"$INPUT\" \"$AUDIO_INDEX\" \"$CURRENT_OUTPUT_FILE\" $TRIM_ARGS $PROGRESS_ARGS"
-  [ "$RES" = "720" ] && CMD="bash \"$LIBEXEC_DIR/video/transcode_720p.sh\" \"$INPUT\" \"$AUDIO_INDEX\" \"$CURRENT_OUTPUT_FILE\" $TRIM_ARGS $PROGRESS_ARGS"
-  [ "$RES" = "480" ] && CMD="bash \"$LIBEXEC_DIR/video/transcode_480p.sh\" \"$INPUT\" \"$AUDIO_INDEX\" \"$CURRENT_OUTPUT_FILE\" $TRIM_ARGS $PROGRESS_ARGS"
-  [ "$RES" = "360" ] && CMD="bash \"$LIBEXEC_DIR/video/transcode_360p.sh\" \"$INPUT\" \"$AUDIO_INDEX\" \"$CURRENT_OUTPUT_FILE\" $TRIM_ARGS $PROGRESS_ARGS"
+  [ "$RES" = "1080" ] && CMD="bash \"$LIBEXEC_DIR/video/transcode_1080p.sh\" \"$INPUT\" \"$AUDIO_INDEX\" \"$CURRENT_OUTPUT_FILE\" $TRIM_ARGS $METADATA_ARGS $PROGRESS_ARGS"
+  [ "$RES" = "720" ] && CMD="bash \"$LIBEXEC_DIR/video/transcode_720p.sh\" \"$INPUT\" \"$AUDIO_INDEX\" \"$CURRENT_OUTPUT_FILE\" $TRIM_ARGS $METADATA_ARGS $PROGRESS_ARGS"
+  [ "$RES" = "480" ] && CMD="bash \"$LIBEXEC_DIR/video/transcode_480p.sh\" \"$INPUT\" \"$AUDIO_INDEX\" \"$CURRENT_OUTPUT_FILE\" $TRIM_ARGS $METADATA_ARGS $PROGRESS_ARGS"
+  [ "$RES" = "360" ] && CMD="bash \"$LIBEXEC_DIR/video/transcode_360p.sh\" \"$INPUT\" \"$AUDIO_INDEX\" \"$CURRENT_OUTPUT_FILE\" $TRIM_ARGS $METADATA_ARGS $PROGRESS_ARGS"
 
   if [ "$DRY_RUN" = "true" ]; then
     echo "🌵 [DRY RUN] Would execute: $CMD"
@@ -176,4 +223,3 @@ for RES in $RESOLUTIONS; do
   fi
 done
 echo "✅ Encoding completed"
-

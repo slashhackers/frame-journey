@@ -38,45 +38,11 @@ if [ -n "$EXPLICIT_AUDIO_INDEX" ]; then
   exit 1
 fi
 
-# 2. Handle auto-selection for a single audio stream
-if [ "${#AUDIO_STREAMS[@]}" -eq 1 ]; then
+# 2. Handle single or multiple audio streams (default to the first one)
+if [ "${#AUDIO_STREAMS[@]}" -ge 1 ]; then
   IFS=',' read -r STREAM_INDEX LANGUAGE_TAG <<< "${AUDIO_STREAMS[0]}"
   echo "$STREAM_INDEX"
-  exit 0 # Auto-selected the only available track
-fi
-
-# 3. Handle multiple audio streams (prompt user for selection)
-if [ "${#AUDIO_STREAMS[@]}" -gt 1 ]; then
-  echo "Multiple audio streams found in '$INPUT_FILE'. Please select an audio track:"
-  for STREAM_INFO in "${AUDIO_STREAMS[@]}"; do
-    IFS=',' read -r STREAM_INDEX LANGUAGE_TAG <<< "$STREAM_INFO"
-    if [ -n "$LANGUAGE_TAG" ]; then
-      echo "  Track $STREAM_INDEX: Language = $LANGUAGE_TAG"
-    else
-      echo "  Track $STREAM_INDEX: (No language tag)"
-    fi
-  done
-
-  while true; do
-    read -p "Enter desired audio track index (e.g., 0, 1): " SELECTED_AUDIO_INDEX_FROM_USER
-    
-    # Validate user's selection against available stream indices
-    IS_VALID_SELECTION=false
-    for STREAM_INFO in "${AUDIO_STREAMS[@]}"; do
-      IFS=',' read -r STREAM_INDEX LANGUAGE_TAG <<< "$STREAM_INFO"
-      if [ "$STREAM_INDEX" = "$SELECTED_AUDIO_INDEX_FROM_USER" ]; then
-        IS_VALID_SELECTION=true
-        break
-      fi
-    done
-
-    if [ "$IS_VALID_SELECTION" = "true" ]; then
-      echo "$SELECTED_AUDIO_INDEX_FROM_USER"
-      exit 0 # User made a valid selection
-    else
-      echo "Invalid selection. Please enter a valid audio track index from the list above."
-    fi
-  done
+  exit 0 # Auto-selected the first available track
 fi
 
 # Fallback: No audio streams found or unexpected scenario

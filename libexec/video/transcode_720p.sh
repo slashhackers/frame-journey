@@ -13,6 +13,8 @@ OUTPUT_FILE="$3"
 TRIM_START=""
 DURATION="" # Changed from TRIM_END
 PROGRESS_DURATION=""
+METADATA_TITLE=""
+METADATA_DESCRIPTION=""
 
 # Parse additional arguments for trim-start and duration
 shift 3 # Shift past the positional arguments
@@ -28,6 +30,14 @@ while [[ "$#" -gt 0 ]]; do
       ;;
     --progress-duration)
       PROGRESS_DURATION="$2"
+      shift
+      ;;
+    --title)
+      METADATA_TITLE="$2"
+      shift
+      ;;
+    --description)
+      METADATA_DESCRIPTION="$2"
       shift
       ;;
     *)
@@ -47,9 +57,15 @@ if [ -n "$DURATION" ]; then # Changed from TRIM_END
   FFMPEG_TRIM_OPTIONS+="-t \"$DURATION\" " # Changed to -t
 fi
 
+# Build Metadata options
+# -map_metadata -1 clears existing global metadata
+# Then we set title and description
+METADATA_OPTIONS="-map_metadata -1 -metadata title=\"$METADATA_TITLE\" -metadata description=\"$METADATA_DESCRIPTION\""
+
 echo "Starting 720p encoding"
 eval "ffmpeg -y -nostats -loglevel 0 -progress pipe:1 -i \"${INPUT_FILE}\" ${FFMPEG_TRIM_OPTIONS} \
   -map 0:v:0 -map 0:a:\"${AUDIO_INDEX}\" \
+  ${METADATA_OPTIONS} \
   -c:v h264_videotoolbox \
   -b:v $BITRATE_720 \
   -pix_fmt yuv420p \
