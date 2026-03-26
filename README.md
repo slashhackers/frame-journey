@@ -1,37 +1,21 @@
 # 🎢 Frame Journey
 
-**Frame Journey** is a high-quality, streaming-optimized **video
-processing pipeline** designed to convert raw videos into
-**YouTube-style playback formats** with the best balance of quality and
-file size.
+**Frame Journey** is a professional-grade **video processing pipeline** designed to convert raw videos into **YouTube-quality streaming formats** optimized for direct upload and playback on **Telegram**.
 
-Just like a roller coaster 🎢 smoothly handles ups, downs, and speed
-changes, **Frame Journey** guides every video frame through resolution,
-bitrate, and audio decisions---efficiently and safely.
+Just like a roller coaster 🎢 smoothly handles every turn, **Frame Journey** guides your video through resolution, bitrate, and audio decisions---ensuring the perfect balance between high visual quality and low file size.
 
 ------------------------------------------------------------------------
 
-## 🚀 What is Frame Journey?
+## 🚀 Why Frame Journey?
 
-Frame Journey accepts videos of any resolution (4K, 1080p, 720p, or
-lower) and intelligently produces **stream-ready outputs** without
-unnecessary processing or quality loss.
+Converting videos for Telegram can be tricky. Frame Journey automates this by intelligently producing **stream-ready outputs** that look like they were encoded by YouTube, but are lightweight enough to be uploaded and shared instantly.
 
-It is built for: - Video streaming platforms - OTT services - Course
-platforms - Creator tools - Internal media pipelines
+### 🎯 Core Features
 
-------------------------------------------------------------------------
-
-## 🎯 Core Features
-
-### 🎥 Smart Resolution Handling
-
--   Supports any input resolution
--   Outputs only:
-    -   **1080p** (if input ≥ 1080p)
-    -   **720p** (if input ≥ 720p)
--   ❌ No upscaling (natural quality preserved)
--   🎬 YouTube-style encoding profiles
+-   **🎥 YouTube-Style Quality**: Uses professional encoding profiles (libx264/HEVC) optimized for high visual retention.
+-   **📱 Telegram Optimized**: Outputs are specifically tuned for Telegram's streaming player (FastStart enabled).
+-   **🎧 Smart Audio Selection**: Automatically detects and picks the best audio track (e.g., prefers Hindi in multi-language files).
+-   **⚡ Fast & Lightweight**: No unnecessary upscaling; preserves natural quality while reducing file size.
 
 ------------------------------------------------------------------------
 
