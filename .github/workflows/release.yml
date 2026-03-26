@@ -2,11 +2,13 @@ name: Release
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
 
 permissions:
   contents: write
+  issues: write
+  pull-requests: write
 
 jobs:
   release:
@@ -16,19 +18,24 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          tag_name: ${{ github.ref_name }}
-          name: Release ${{ github.ref_name }}
-          generate_release_notes: true
-          body: |
-            ### 🚀 Installation
-            ```bash
-            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/slashhackers/frame-journey/main/install.sh)"
-            ```
-            
-            *(Release notes automatically generated below)*
-          draft: false
-          prerelease: false
+          node-version: 'lts/*'
+
+      - name: Install dependencies
+        run: |
+          npm install -g \
+            semantic-release \
+            @semantic-release/commit-analyzer \
+            @semantic-release/release-notes-generator \
+            @semantic-release/exec \
+            @semantic-release/git \
+            @semantic-release/github
+
+      - name: Run Semantic Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx semantic-release
