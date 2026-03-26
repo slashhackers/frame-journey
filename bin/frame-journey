@@ -14,12 +14,16 @@ SELECTED_RESOLUTION=""
 TRIM_START=""
 DURATION="" # Changed from TRIM_END
 SHOW_PROGRESS_ENABLED="false"
+DRY_RUN="false"
 OUTPUT_FILE_NAME=""
 EXPLICIT_AUDIO_INDEX=""
 
 # Parse arguments
 while [[ "$#" -gt 0 ]]; do
   case "$1" in
+    --dry-run)
+      DRY_RUN="true"
+      ;;
     -v|--version)
       echo "frame-journey v$VERSION"
       exit 0
@@ -147,8 +151,14 @@ for RES in $RESOLUTIONS; do
     fi
   fi
 
-  [ "$RES" = "1080" ] && eval "bash \"$LIBEXEC_DIR/video/transcode_1080p.sh\" \"$INPUT\" \"$AUDIO_INDEX\" \"$CURRENT_OUTPUT_FILE\" $TRIM_ARGS $PROGRESS_ARGS"
-  [ "$RES" = "720" ] && eval "bash \"$LIBEXEC_DIR/video/transcode_720p.sh\" \"$INPUT\" \"$AUDIO_INDEX\" \"$CURRENT_OUTPUT_FILE\" $TRIM_ARGS $PROGRESS_ARGS"
+  [ "$RES" = "1080" ] && CMD="bash \"$LIBEXEC_DIR/video/transcode_1080p.sh\" \"$INPUT\" \"$AUDIO_INDEX\" \"$CURRENT_OUTPUT_FILE\" $TRIM_ARGS $PROGRESS_ARGS"
+  [ "$RES" = "720" ] && CMD="bash \"$LIBEXEC_DIR/video/transcode_720p.sh\" \"$INPUT\" \"$AUDIO_INDEX\" \"$CURRENT_OUTPUT_FILE\" $TRIM_ARGS $PROGRESS_ARGS"
+
+  if [ "$DRY_RUN" = "true" ]; then
+    echo "🌵 [DRY RUN] Would execute: $CMD"
+  else
+    eval "$CMD"
+  fi
 done
 echo "✅ Encoding completed"
 

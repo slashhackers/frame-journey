@@ -40,7 +40,7 @@ jobs:
 
       - name: Check for Hardcoded Paths
         run: |
-          if grep -r "/Users/" .; then
+          if grep -r "/Users/" . --exclude-dir=.github; then
             echo "❌ Hardcoded absolute paths found!"
             exit 1
           fi

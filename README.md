@@ -111,6 +111,7 @@ frame-journey input.mp4
 ### Options:
 - `-v, --version`: Show the current version.
 - `--update`: Check for and install updates.
+- `--dry-run`: Show what would be done without actual transcoding.
 - `-r <resolution>`: Select output resolution (720, 1080).
 - `--trim-start <time>`: Start time (e.g., 00:00:10).
 - `--duration <length>`: Duration (e.g., 60).
