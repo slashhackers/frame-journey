@@ -1,0 +1,47 @@
+name: CI Checks
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  lint:
+    name: ShellCheck
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run ShellCheck
+        uses: ludeeus/action-shellcheck@master
+        with:
+          scandir: './bin ./libexec ./utils ./audio ./video' # Scan all script directories
+          severity: warning
+
+  health-check:
+    name: Project Health
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Verify Permissions
+        run: |
+          chmod +x bin/frame-journey
+          chmod +x libexec/**/*.sh
+          chmod +x doctor.sh
+
+      - name: Run Doctor
+        run: ./doctor.sh
+
+      - name: Check for Hardcoded Paths
+        run: |
+          if grep -r "/Users/" .; then
+            echo "❌ Hardcoded absolute paths found!"
+            exit 1
+          fi
+          echo "✅ No hardcoded absolute paths found."
