@@ -82,6 +82,13 @@ chmod +x doctor.sh
 ./doctor.sh
 ```
 
+### 4. Uninstall
+If you need to remove Frame Journey from your system:
+```bash
+# Run the uninstaller
+./uninstall.sh
+```
+
 ----------------------------------------
 
 ## ▶️ Usage

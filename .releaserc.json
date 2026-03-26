@@ -21,7 +21,7 @@
       }
     }],
     ["@semantic-release/exec", {
-      "prepareCmd": "sed -i 's/VERSION=\".*\"/VERSION=\"${nextRelease.version}\"/' bin/frame-journey && tar -czf frame-journey.tar.gz bin libexec config"
+      "prepareCmd": "sed -i 's/VERSION=\".*\"/VERSION=\"${nextRelease.version}\"/' bin/frame-journey && tar -czf frame-journey.tar.gz bin libexec config uninstall.sh"
     }],
     ["@semantic-release/git", {
       "assets": ["bin/frame-journey"],
