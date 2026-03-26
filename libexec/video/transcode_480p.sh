@@ -63,7 +63,7 @@ fi
 METADATA_OPTIONS="-map_metadata -1 -metadata title=\"$METADATA_TITLE\" -metadata description=\"$METADATA_DESCRIPTION\""
 
 echo "Starting 480p encoding"
-eval "ffmpeg -y -nostats -loglevel 0 -progress pipe:1 -i \"${INPUT_FILE}\" ${FFMPEG_TRIM_OPTIONS} \
+eval "ffmpeg -y -nostats -loglevel error -progress pipe:1 -i \"${INPUT_FILE}\" ${FFMPEG_TRIM_OPTIONS} \
   -map 0:v:0 -map 0:a:\"${AUDIO_INDEX}\" \
   ${METADATA_OPTIONS} \
   -c:v h264_videotoolbox \
@@ -74,10 +74,11 @@ eval "ffmpeg -y -nostats -loglevel 0 -progress pipe:1 -i \"${INPUT_FILE}\" ${FFM
   -vf scale=$SCALE_480 \
   -movflags +faststart \
   -c:a aac -b:a 128k \
-  \"${OUTPUT_FILE}\" 2>/dev/null" | bash "$PROJECT_ROOT/libexec/utils/progress_monitor.sh" "$PROGRESS_DURATION"
+  \"${OUTPUT_FILE}\"" | bash "$PROJECT_ROOT/libexec/utils/progress_monitor.sh" "$PROGRESS_DURATION"
 
-if [ $? -ne 0 ]; then
-    echo "❌ 480p encoding failed"
+FFMPEG_EXIT_CODE=${PIPESTATUS[0]}
+if [ $FFMPEG_EXIT_CODE -ne 0 ]; then
+    echo "❌ 480p encoding failed (exit code: $FFMPEG_EXIT_CODE)"
     exit 1
 fi
 

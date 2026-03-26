@@ -56,7 +56,7 @@ fi
 METADATA_OPTIONS="-map_metadata -1 -metadata title=\"$METADATA_TITLE\" -metadata description=\"$METADATA_DESCRIPTION\""
 
 echo "Starting 720p HEVC encoding"
-eval "ffmpeg -y -i \"${INPUT_FILE}\" ${FFMPEG_TRIM_OPTIONS} \
+eval "ffmpeg -y -loglevel error -i \"${INPUT_FILE}\" ${FFMPEG_TRIM_OPTIONS} \
   -map 0:v:0 -map 0:a:\"${AUDIO_INDEX}\" \
   ${METADATA_OPTIONS} \
   -c:v hevc_videotoolbox \
@@ -71,8 +71,9 @@ eval "ffmpeg -y -i \"${INPUT_FILE}\" ${FFMPEG_TRIM_OPTIONS} \
   -c:a aac -b:a 128k \
   \"${OUTPUT_FILE}\""
 
-if [ $? -ne 0 ]; then
-    echo "❌ 720p HEVC encoding failed"
+FFMPEG_EXIT_CODE=$?
+if [ $FFMPEG_EXIT_CODE -ne 0 ]; then
+    echo "❌ 720p HEVC encoding failed (exit code: $FFMPEG_EXIT_CODE)"
     exit 1
 fi
 
