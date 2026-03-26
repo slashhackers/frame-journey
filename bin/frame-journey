@@ -85,7 +85,15 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 if [ -z "$INPUT" ]; then
-    echo "Usage: frame-journey [-r <resolution>] [--trim-start <time>] [--duration <length>] <input_video_file>" # Updated Usage
+    echo "Usage: frame-journey [options] <input_video_file>"
+    echo "Options:"
+    echo "  -r <720|1080>       Select output resolution"
+    echo "  --trim-start <time> Start time (e.g. 00:00:10)"
+    echo "  --duration <sec>    Duration in seconds"
+    echo "  --show-progress     Show live progress bar"
+    echo "  --dry-run           Show command without encoding"
+    echo "  -v, --version       Show version"
+    echo "  --update            Check for updates"
     exit 1
 fi
 

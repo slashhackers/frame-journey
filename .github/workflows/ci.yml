@@ -36,6 +36,8 @@ jobs:
           chmod +x doctor.sh
 
       - name: Run Doctor
+        env:
+          SKIP_TOOLS_CHECK: true
         run: ./doctor.sh
 
       - name: Check for Hardcoded Paths

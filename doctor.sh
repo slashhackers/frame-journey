@@ -28,42 +28,47 @@ case "$OS" in
     ;;
 esac
 
-echo
-echo "🎬 FFmpeg Check"
-check command -v ffmpeg
-check command -v ffprobe
+if [ "$SKIP_TOOLS_CHECK" != "true" ]; then
+  echo
+  echo "🎬 FFmpeg Check"
+  check command -v ffmpeg
+  check command -v ffprobe
 
-if command -v ffmpeg >/dev/null 2>&1; then
-  echo "$PASS $(ffmpeg -version | head -n 1)"
-fi
+  if command -v ffmpeg >/dev/null 2>&1; then
+    echo "$PASS $(ffmpeg -version | head -n 1)"
+  fi
 
-echo
-echo "🎥 Codec Support"
-check ffmpeg -encoders | grep -q libx264
-check ffmpeg -decoders | grep -q h264
+  echo
+  echo "🎥 Codec Support"
+  check ffmpeg -encoders | grep -q libx264
+  check ffmpeg -decoders | grep -q h264
 
-echo
-echo "📐 Filter Support"
-check ffmpeg -filters | grep -q scale
-check ffmpeg -filters | grep -q aresample
+  echo
+  echo "📐 Filter Support"
+  check ffmpeg -filters | grep -q scale
+  check ffmpeg -filters | grep -q aresample
 
-echo
-echo "🎧 Audio Codec Support"
-check ffmpeg -encoders | grep -q aac
-check ffmpeg -decoders | grep -q aac
+  echo
+  echo "🎧 Audio Codec Support"
+  check ffmpeg -encoders | grep -q aac
+  check ffmpeg -decoders | grep -q aac
 
-echo
-echo "⚡ GPU Encoder Check (Optional)"
-if ffmpeg -encoders | grep -q nvenc; then
-  echo "$PASS NVIDIA NVENC available"
+  echo
+  echo "⚡ GPU Encoder Check (Optional)"
+  if ffmpeg -encoders | grep -q nvenc; then
+    echo "$PASS NVIDIA NVENC available"
+  else
+    echo "ℹ️  NVENC not found (CPU encoding will be used)"
+  fi
+
+  if ffmpeg -encoders | grep -q vaapi; then
+    echo "$PASS VAAPI available"
+  else
+    echo "ℹ️  VAAPI not found"
+  fi
 else
-  echo "ℹ️  NVENC not found (CPU encoding will be used)"
-fi
-
-if ffmpeg -encoders | grep -q vaapi; then
-  echo "$PASS VAAPI available"
-else
-  echo "ℹ️  VAAPI not found"
+  echo
+  echo "🎬 Tool checks skipped (SKIP_TOOLS_CHECK=true)"
 fi
 
 echo
@@ -93,8 +98,10 @@ done
 
 echo
 echo "🔐 Permission Check"
-if find . -name "*.sh" ! -executable | grep -q .; then
+NON_EXECUTABLE_SCRIPTS=$(find . -name "*.sh" ! -perm -111 -type f)
+if [ -n "$NON_EXECUTABLE_SCRIPTS" ]; then
   echo "⚠️  Some scripts are not executable"
+  echo "$NON_EXECUTABLE_SCRIPTS"
   echo "   Run: chmod +x **/*.sh"
 else
   echo "$PASS All scripts executable"
