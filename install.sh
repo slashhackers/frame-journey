@@ -113,11 +113,32 @@ check_path() {
     fi
 }
 
+setup_path_persistence() {
+    local shell_profile=""
+    case "$SHELL" in
+        */zsh)  shell_profile="$HOME/.zshrc" ;;
+        */bash) shell_profile="$HOME/.bashrc" ;;
+        *)      status_info "Unknown shell. Please manually add $BIN_DIR to your PATH."; return ;;
+    esac
+
+    # Ensure the profile exists
+    touch "$shell_profile"
+
+    if grep -q "$BIN_DIR" "$shell_profile" 2>/dev/null; then
+        status_ok "PATH is already configured in $shell_profile"
+    else
+        status_info "Adding $BIN_DIR to PATH in $shell_profile..."
+        printf "\n# Frame Journey CLI\nexport PATH=\"\$HOME/.local/bin:\$PATH\"\n" >> "$shell_profile"
+        status_ok "PATH updated! Please run: ${BLUE}source $shell_profile${NC}"
+    fi
+}
+
 # --- Main Execution ---
 
 verify_dependencies
 install_files
 setup_symlink
+setup_path_persistence
 check_path
 
 echo "------------------------------------------"
