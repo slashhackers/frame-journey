@@ -1,0 +1,154 @@
+#!/bin/bash
+set -e
+
+# Get the directory where the script is located
+BIN_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
+PROJECT_ROOT=$(dirname "$BIN_DIR")
+LIBEXEC_DIR="$PROJECT_ROOT/libexec"
+
+VERSION="1.0.0"
+
+# Initialize variables
+INPUT=""
+SELECTED_RESOLUTION=""
+TRIM_START=""
+DURATION="" # Changed from TRIM_END
+SHOW_PROGRESS_ENABLED="false"
+OUTPUT_FILE_NAME=""
+EXPLICIT_AUDIO_INDEX=""
+
+# Parse arguments
+while [[ "$#" -gt 0 ]]; do
+  case "$1" in
+    -v|--version)
+      echo "frame-journey v$VERSION"
+      exit 0
+      ;;
+    --update)
+      echo "🔍 Checking for updates on GitHub..."
+      LATEST_TAG=$(curl -s https://api.github.com/repos/slashhackers/frame-journey/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/' || echo "")
+      
+      if [ -z "$LATEST_TAG" ]; then
+        echo "⚠️  Could not fetch version info from GitHub. Trying forced update..."
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/slashhackers/frame-journey/main/install.sh)"
+        exit 0
+      fi
+
+      # Remove 'v' prefix for comparison if present
+      LATEST_VERSION=${LATEST_TAG#v}
+      
+      if [ "$LATEST_VERSION" == "$VERSION" ]; then
+        echo "✅ You are already using the latest version (v$VERSION)."
+      else
+        echo "✨ New version available: $LATEST_TAG (Current: v$VERSION)"
+        echo "🚀 Running installer..."
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/slashhackers/frame-journey/main/install.sh)"
+      fi
+      exit 0
+      ;;
+    -r)
+      SELECTED_RESOLUTION="$2"
+      shift
+      ;;
+    --trim-start)
+      TRIM_START="$2"
+      shift
+      ;;
+    --duration) # Changed from --trim-end
+      DURATION="$2"
+      shift
+      ;;
+    --show-progress)
+      SHOW_PROGRESS_ENABLED="true"
+      ;;
+    -o|--output)
+      OUTPUT_FILE_NAME="$2"
+      shift
+      ;;
+    --audio)
+      EXPLICIT_AUDIO_INDEX="$2"
+      shift
+      ;;
+    -*)
+      echo "Invalid option: $1" >&2
+      exit 1
+      ;;
+    *)
+      INPUT="$1"
+      ;;
+  esac
+  shift
+done
+
+if [ -z "$INPUT" ]; then
+    echo "Usage: frame-journey [-r <resolution>] [--trim-start <time>] [--duration <length>] <input_video_file>" # Updated Usage
+    exit 1
+fi
+
+IFS="|" read HEIGHT DURATION_UNUSED AUDIO_STREAMS <<< "$(bash "$LIBEXEC_DIR/utils/ffprobe.sh" "$INPUT")"
+if [ "$SHOW_PROGRESS_ENABLED" = "true" ]; then
+  echo "🔍 Analyzing video file..."
+fi
+AUDIO_STREAMS_ARRAY=($AUDIO_STREAMS)
+if [ "$SHOW_PROGRESS_ENABLED" = "true" ]; then
+  echo "🎧 Selecting audio track..."
+fi
+
+if [ -n "$SELECTED_RESOLUTION" ]; then
+    # Validate selected resolution
+    if [ "$SELECTED_RESOLUTION" != "720" ] && [ "$SELECTED_RESOLUTION" != "1080" ]; then
+        echo "Error: Invalid resolution specified. Use '720' or '1080'."
+        exit 1
+    fi
+    RESOLUTIONS="$SELECTED_RESOLUTION"
+else
+    RESOLUTIONS=$(bash "$LIBEXEC_DIR/video/select_resolution.sh" "$HEIGHT")
+fi
+
+
+AUDIO_INDEX=$(bash "$LIBEXEC_DIR/audio/select_audio.sh" "$INPUT" "${AUDIO_STREAMS_ARRAY[*]}" "$EXPLICIT_AUDIO_INDEX")
+
+# Calculate EFFECTIVE_DURATION for progress monitoring
+EFFECTIVE_DURATION=""
+if [ -n "$DURATION" ]; then
+  # If --duration is specified, use that as the effective duration
+  EFFECTIVE_DURATION="$DURATION"
+else
+  # Otherwise, use the full video duration
+  EFFECTIVE_DURATION="$DURATION_UNUSED"
+fi
+
+if [ "$SHOW_PROGRESS_ENABLED" = "true" ]; then
+  echo "🎬 Starting video encoding..."
+fi
+
+for RES in $RESOLUTIONS; do
+  TRIM_ARGS=""
+  if [ -n "$TRIM_START" ]; then
+    TRIM_ARGS+="--trim-start \"$TRIM_START\" "
+  fi
+  if [ -n "$DURATION" ]; then # Changed from TRIM_END
+    TRIM_ARGS+="--duration \"$DURATION\"" # Changed from --trim-end
+  fi
+
+  PROGRESS_ARGS=""
+  if [ "$SHOW_PROGRESS_ENABLED" = "true" ]; then
+    PROGRESS_ARGS+="--progress-duration \"$EFFECTIVE_DURATION\""
+  fi
+
+  CURRENT_OUTPUT_FILE=""
+  if [ -n "$OUTPUT_FILE_NAME" ]; then
+    CURRENT_OUTPUT_FILE="$OUTPUT_FILE_NAME"
+  else
+    if [ "$RES" = "1080" ]; then
+      CURRENT_OUTPUT_FILE="output_1080p.mp4"
+    else
+      CURRENT_OUTPUT_FILE="output_720p.mp4"
+    fi
+  fi
+
+  [ "$RES" = "1080" ] && eval "bash \"$LIBEXEC_DIR/video/transcode_1080p.sh\" \"$INPUT\" \"$AUDIO_INDEX\" \"$CURRENT_OUTPUT_FILE\" $TRIM_ARGS $PROGRESS_ARGS"
+  [ "$RES" = "720" ] && eval "bash \"$LIBEXEC_DIR/video/transcode_720p.sh\" \"$INPUT\" \"$AUDIO_INDEX\" \"$CURRENT_OUTPUT_FILE\" $TRIM_ARGS $PROGRESS_ARGS"
+done
+echo "✅ Encoding completed"
+

@@ -1,0 +1,14 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Files that might be created during video processing
+output_*.mp4
+*.mkv
+*.temp
+*.log
+
+# Installer/Local development
+.local/
+temp/
