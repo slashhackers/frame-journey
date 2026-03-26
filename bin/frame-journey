@@ -17,14 +17,14 @@ SHOW_PROGRESS_ENABLED="false"
 DRY_RUN="false"
 OUTPUT_FILE_NAME=""
 EXPLICIT_AUDIO_INDEX=""
+HELP_MODE="false"
 
 # Parse arguments
 while [[ "$#" -gt 0 ]]; do
   case "$1" in
     -h|--help)
-      # Trigger the usage message below by clearing INPUT and breaking
-      INPUT=""
-      break
+      HELP_MODE="true"
+      shift
       ;;
     --dry-run)
       DRY_RUN="true"
@@ -89,7 +89,7 @@ while [[ "$#" -gt 0 ]]; do
   shift
 done
 
-if [ -z "$INPUT" ]; then
+if [ "$HELP_MODE" = "true" ] || [ -z "$INPUT" ]; then
     echo "Usage: frame-journey [options] <input_video_file>"
     echo "Options:"
     echo "  -r <720|1080>       Select output resolution"
@@ -99,7 +99,12 @@ if [ -z "$INPUT" ]; then
     echo "  --dry-run           Show command without encoding"
     echo "  -v, --version       Show version"
     echo "  --update            Check for updates"
-    exit 1
+    
+    if [ "$HELP_MODE" = "true" ]; then
+        exit 0
+    else
+        exit 1
+    fi
 fi
 
 IFS="|" read HEIGHT DURATION_UNUSED AUDIO_STREAMS <<< "$(bash "$LIBEXEC_DIR/utils/ffprobe.sh" "$INPUT")"
